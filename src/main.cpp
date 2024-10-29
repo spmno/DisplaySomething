@@ -41,7 +41,8 @@
 //#include <GFX.h>
 // Note: if you use this with ENABLE_GxEPD2_GFX 1:
 //       uncomment it in GxEPD2_GFX.h too, or add #include <GFX.h> before any #include <GxEPD2_GFX.h>
-
+#include <Arduino.h>
+#include <SPI.h>
 #include <GxEPD2_BW.h>
 #include <GxEPD2_3C.h>
 #include <GxEPD2_4C.h>
@@ -152,74 +153,35 @@
 #elif IS_GxEPD2_7C(GxEPD2_DISPLAY_CLASS)
 #define MAX_HEIGHT(EPD) (EPD::HEIGHT <= (MAX_DISPLAY_BUFFER_SIZE) / (EPD::WIDTH / 2) ? EPD::HEIGHT : (MAX_DISPLAY_BUFFER_SIZE) / (EPD::WIDTH / 2))
 #endif
-GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS, MAX_HEIGHT(GxEPD2_DRIVER_CLASS)> display(GxEPD2_DRIVER_CLASS(/*CS=*/ 15, /*DC=*/ 27, /*RST=*/ 26, /*BUSY=*/ 25));
+//GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS, MAX_HEIGHT(GxEPD2_DRIVER_CLASS)> display(GxEPD2_DRIVER_CLASS(/*CS=*/ 15, /*DC=*/ 27, /*RST=*/ 26, /*BUSY=*/ 25));
+GxEPD2_3C<GxEPD2_750c_Z08, GxEPD2_750c_Z08::HEIGHT> display(GxEPD2_750c_Z08(/*CS=5*/ 5, /*DC=*/ 19, /*RST=*/ 16, /*BUSY=*/ 17)); // GDEW075Z08 800x480, GD7965
 #endif
 
 // alternately you can copy the constructor from GxEPD2_display_selection.h of GxEPD_Example to here
 // and adapt it to the ESP32 Driver wiring, e.g.
 //GxEPD2_BW<GxEPD2_154_D67, GxEPD2_154_D67::HEIGHT> display(GxEPD2_154_D67(/*CS=*/ 15, /*DC=*/ 27, /*RST=*/ 26, /*BUSY=*/ 25)); // GDEH0154D67
+//GxEPD2_3C<GxEPD2_750c_Z08, GxEPD2_750c_Z08::HEIGHT> display(GxEPD2_750c_Z08(/*CS=5*/ 5, /*DC=*/ 19, /*RST=*/ 16, /*BUSY=*/ 17)); // GDEW075Z08 800x480, GD7965
 
 // comment out unused bitmaps to reduce code space used
-#include "bitmaps/Bitmaps200x200.h" // 1.54" b/w
-#include "bitmaps/Bitmaps104x212.h" // 2.13" b/w flexible GDEW0213I5F
-#include "bitmaps/Bitmaps128x250.h" // 2.13" b/w
-#include "bitmaps/Bitmaps128x296.h" // 2.9"  b/w
-#include "bitmaps/Bitmaps176x264.h" // 2.7"  b/w
-#include "bitmaps/Bitmaps400x300.h" // 4.2"  b/w
+//#include "bitmaps/Bitmaps200x200.h" // 1.54" b/w
+//#include "bitmaps/Bitmaps104x212.h" // 2.13" b/w flexible GDEW0213I5F
+//#include "bitmaps/Bitmaps128x250.h" // 2.13" b/w
+//#include "bitmaps/Bitmaps128x296.h" // 2.9"  b/w
+//#include "bitmaps/Bitmaps176x264.h" // 2.7"  b/w
+//#include "bitmaps/Bitmaps400x300.h" // 4.2"  b/w
 #include "bitmaps/Bitmaps640x384.h" // 7.5"  b/w
 // 3-color
-#include "bitmaps/Bitmaps3c200x200.h" // 1.54" b/w/r
-#include "bitmaps/Bitmaps3c104x212.h" // 2.13" b/w/r
-#include "bitmaps/Bitmaps3c128x296.h" // 2.9"  b/w/r
-#include "bitmaps/Bitmaps3c176x264.h" // 2.7"  b/w/r
-#include "bitmaps/Bitmaps3c400x300.h" // 4.2"  b/w/r
+//#include "bitmaps/Bitmaps3c200x200.h" // 1.54" b/w/r
+//#include "bitmaps/Bitmaps3c104x212.h" // 2.13" b/w/r
+//#include "bitmaps/Bitmaps3c128x296.h" // 2.9"  b/w/r
+//#include "bitmaps/Bitmaps3c176x264.h" // 2.7"  b/w/r
+//#include "bitmaps/Bitmaps3c400x300.h" // 4.2"  b/w/r
 
 #if defined(ESP32) && defined(USE_HSPI_FOR_EPD)
 SPIClass hspi(HSPI);
 #endif
 
-void setup()
-{
-  Serial.begin(115200);
-  Serial.println();
-  Serial.println("setup");
-  // *** special handling for Waveshare ESP32 Driver board *** //
-  // ********************************************************* //
-#if defined(ESP32) && defined(USE_HSPI_FOR_EPD)
-  //hspi.begin(13, 12, 14, 15); // remap hspi for EPD (swap pins)
-  hspi.begin(18, 19, 23, 5);
-  GxEPD2_3C<GxEPD2_750c_Z08, GxEPD2_750c_Z08::HEIGHT> display(GxEPD2_750c_Z08(5, 19, 16, 17));
-  display.epd2.selectSPI(hspi, SPISettings(4000000, MSBFIRST, SPI_MODE0));
-#endif
-  // *** end of special handling for Waveshare ESP32 Driver board *** //
-  // **************************************************************** //
-  display.init(115200);
-  // first update should be full refresh
-  helloWorld();
-  delay(1000);
-  // partial refresh mode can be used to full screen,
-  // effective if display panel hasFastPartialUpdate
-  helloFullScreenPartialMode();
-  delay(1000);
-  helloArduino();
-  delay(1000);
-  helloEpaper();
-  delay(1000);
-  showFont("FreeMonoBold9pt7b", &FreeMonoBold9pt7b);
-  delay(1000);
-  drawBitmaps();
-  if (display.epd2.hasPartialUpdate)
-  {
-    showPartialUpdate();
-    delay(1000);
-  } // else // on GDEW0154Z04 only full update available, doesn't look nice
-  //drawCornerTest();
-  //showBox(16, 16, 48, 32, false);
-  //showBox(16, 56, 48, 32, true);
-  display.powerOff();
-  deepSleepTest();
-  Serial.println("setup done");
-}
+
 
 void loop()
 {
@@ -523,18 +485,6 @@ void drawCornerTest()
   }
 }
 
-void showFont(const char name[], const GFXfont* f)
-{
-  display.setFullWindow();
-  display.setRotation(0);
-  display.setTextColor(GxEPD_BLACK);
-  display.firstPage();
-  do
-  {
-    drawFont(name, f);
-  }
-  while (display.nextPage());
-}
 
 void drawFont(const char name[], const GFXfont* f)
 {
@@ -556,6 +506,20 @@ void drawFont(const char name[], const GFXfont* f)
   display.println("`abcdefghijklmno");
   display.println("pqrstuvwxyz{|}~ ");
 }
+
+void showFont(const char name[], const GFXfont* f)
+{
+  display.setFullWindow();
+  display.setRotation(0);
+  display.setTextColor(GxEPD_BLACK);
+  display.firstPage();
+  do
+  {
+    drawFont(name, f);
+  }
+  while (display.nextPage());
+}
+
 
 // note for partial update window and setPartialWindow() method:
 // partial update window size and position is on byte boundary in physical x direction
@@ -628,52 +592,7 @@ void showPartialUpdate()
 }
 
 
-void drawBitmaps()
-{
-  display.setFullWindow();
-#ifdef _GxBitmaps104x212_H_
-  drawBitmaps104x212();
-#endif
-#ifdef _GxBitmaps128x250_H_
-  drawBitmaps128x250();
-#endif
-#ifdef _GxBitmaps128x296_H_
-  drawBitmaps128x296();
-#endif
-#ifdef _GxBitmaps176x264_H_
-  drawBitmaps176x264();
-#endif
-#ifdef _GxBitmaps400x300_H_
-  drawBitmaps400x300();
-#endif
-#ifdef _GxBitmaps640x384_H_
-  drawBitmaps640x384();
-#endif
-#ifdef _WS_Bitmaps800x600_H_
-  drawBitmaps800x600();
-#endif
-  // 3-color
-#ifdef _GxBitmaps3c104x212_H_
-  drawBitmaps3c104x212();
-#endif
-#ifdef _GxBitmaps3c128x296_H_
-  drawBitmaps3c128x296();
-#endif
-#ifdef _GxBitmaps3c176x264_H_
-  drawBitmaps3c176x264();
-#endif
-#ifdef _GxBitmaps3c400x300_H_
-  drawBitmaps3c400x300();
-#endif
-  // show these after the specific bitmaps
-#ifdef _GxBitmaps200x200_H_
-  drawBitmaps200x200();
-#endif
-  // 3-color
-#ifdef _GxBitmaps3c200x200_H_
-  drawBitmaps3c200x200();
-#endif
-}
+
 
 #ifdef _GxBitmaps200x200_H_
 void drawBitmaps200x200()
@@ -1187,3 +1106,92 @@ void drawBitmaps3c400x300()
   }
 }
 #endif
+
+void drawBitmaps()
+{
+  display.setFullWindow();
+#ifdef _GxBitmaps104x212_H_
+  drawBitmaps104x212();
+#endif
+#ifdef _GxBitmaps128x250_H_
+  drawBitmaps128x250();
+#endif
+#ifdef _GxBitmaps128x296_H_
+  drawBitmaps128x296();
+#endif
+#ifdef _GxBitmaps176x264_H_
+  drawBitmaps176x264();
+#endif
+#ifdef _GxBitmaps400x300_H_
+  drawBitmaps400x300();
+#endif
+#ifdef _GxBitmaps640x384_H_
+  drawBitmaps640x384();
+#endif
+#ifdef _WS_Bitmaps800x600_H_
+  drawBitmaps800x600();
+#endif
+  // 3-color
+#ifdef _GxBitmaps3c104x212_H_
+  drawBitmaps3c104x212();
+#endif
+#ifdef _GxBitmaps3c128x296_H_
+  drawBitmaps3c128x296();
+#endif
+#ifdef _GxBitmaps3c176x264_H_
+  drawBitmaps3c176x264();
+#endif
+#ifdef _GxBitmaps3c400x300_H_
+  drawBitmaps3c400x300();
+#endif
+  // show these after the specific bitmaps
+#ifdef _GxBitmaps200x200_H_
+  drawBitmaps200x200();
+#endif
+  // 3-color
+#ifdef _GxBitmaps3c200x200_H_
+  drawBitmaps3c200x200();
+#endif
+}
+
+void setup()
+{
+  Serial.begin(115200);
+  Serial.println();
+  Serial.println("setup");
+  // *** special handling for Waveshare ESP32 Driver board *** //
+  // ********************************************************* //
+#if defined(ESP32) && defined(USE_HSPI_FOR_EPD)
+  //hspi.begin(13, 12, 14, 15); // remap hspi for EPD (swap pins)
+  hspi.begin(18, 19, 23, 5);
+  display.epd2.selectSPI(hspi, SPISettings(4000000, MSBFIRST, SPI_MODE0));
+#endif
+  // *** end of special handling for Waveshare ESP32 Driver board *** //
+  // **************************************************************** //
+  display.init(115200);
+  // first update should be full refresh
+  helloWorld();
+  delay(1000);
+  // partial refresh mode can be used to full screen,
+  // effective if display panel hasFastPartialUpdate
+  helloFullScreenPartialMode();
+  delay(1000);
+  helloArduino();
+  delay(1000);
+  helloEpaper();
+  delay(1000);
+  showFont("FreeMonoBold9pt7b", &FreeMonoBold9pt7b);
+  delay(1000);
+  drawBitmaps();
+  if (display.epd2.hasPartialUpdate)
+  {
+    showPartialUpdate();
+    delay(1000);
+  } // else // on GDEW0154Z04 only full update available, doesn't look nice
+  //drawCornerTest();
+  //showBox(16, 16, 48, 32, false);
+  //showBox(16, 56, 48, 32, true);
+  display.powerOff();
+  deepSleepTest();
+  Serial.println("setup done");
+}
