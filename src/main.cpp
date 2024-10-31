@@ -57,6 +57,11 @@
 // wifi
 #include <WiFi.h>
 
+// bt
+#include <BLEDevice.h>
+#define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+
 #define GxEPD2_DISPLAY_CLASS GxEPD2_3C
 #define GxEPD2_DRIVER_CLASS GxEPD2_750c_Z08 // GDEW075Z08  800x480, EK79655 (GD7965), (WFT0583CZ61)
 #define MAX_HEIGHT(EPD) (EPD::HEIGHT <= (MAX_DISPLAY_BUFFER_SIZE / 2) / (EPD::WIDTH / 8) ? EPD::HEIGHT : (MAX_DISPLAY_BUFFER_SIZE / 2) / (EPD::WIDTH / 8))
@@ -159,29 +164,55 @@ void deepSleepTest()
   //Serial.println("deepSleepTest done");
 }
 
+class MyCallbacks: public BLECharacteristicCallbacks {
+    void onRead(BLECharacteristic* pCharacteristic) { // 客户端读取事件回调函数
+      Serial.println("触发读取事件");
+    }
+
+    void onWrite(BLECharacteristic *pCharacteristic) { // 客户端写入事件回调函数
+      Serial.println("触发写入事件");
+    }
+};
 
 
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println();
   Serial.println("setup");
 
-  const char* ssid = "Redmi Note 12 Turbo";
+  const char* ssid = "Redmi";
   const char* password = "12345688";
 
-
-  WiFi.begin(ssid, password);
- 
-  Serial.print("connect Wi-Fi");
+  WiFi.mode(WIFI_STA);
+  wl_status_t wifi_result = WiFi.begin(ssid, password);
+   
+  Serial.print("connect Wi-Fi, status:");
+  Serial.println(wifi_result);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
-    }
+    //Serial.println(WiFi.status());
+  }
  
-  Serial.print("IP: ");
+  Serial.print("IP:");
   Serial.println(WiFi.localIP());
+
+/*
+  BLEDevice::init("ESP32-BLE");
+  BLEServer *pServer = BLEDevice::createServer();
+  BLEService *pService = pServer->createService(SERVICE_UUID); 
+  BLECharacteristic *pCharacteristic = pService->createCharacteristic(
+                                                  CHARACTERISTIC_UUID, 
+                                                  BLECharacteristic::PROPERTY_READ |
+                                                  BLECharacteristic::PROPERTY_WRITE
+                                                  );
+  pCharacteristic->setCallbacks(new MyCallbacks());
+  pService->start(); 
+
+  BLEDevice::startAdvertising();
+*/
 
   //init e-paper
   hspi.begin(18, 19, 23, 5);
